@@ -1,5 +1,6 @@
 
 COMPILER=/usr/bin/pasm -b 
+#FILENAME=rpm
 FILENAME=rpm
 
 .PHONY: clean all

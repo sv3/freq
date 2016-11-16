@@ -15,7 +15,6 @@
 #define SHARED_RAM           0x100
 
 #define SECOND               200000000      // 2e8 5ns cycles
-#define DELAY                  2000000      // 0.01 s
     
 START:
     lbco r0, CONST_PRUCFG, 4, 4          // Enable OCP master port
@@ -26,25 +25,21 @@ START:
     mov  r1, PRU0_CTRL + CTPPR0
     sbbo r0, r1, 0, 4
 
-    mov  r2.w0, DELAY & 0xFFFF
-    mov  r2.w2, DELAY >> 16 
-
-WAITLO:
-    qbbc WAITLO, r31.t15
-
-IGNORE:                              // Wait for 50 consecutive readings of 1
-    add  r0, r0, 2                     // 3 cycles per loop
-    qbgt IGNORE, r0, r2
-
-WAIT1:                                 // Continue counting while input is still 1
-    add  r0, r0, 2
-    qbbs WAIT1, r31.t15
-
-WAIT2:                                 // Continue counting while input is 0
-    add  r0, r0, 2
-    qbbc WAIT2, r31.t15                // End count when input goes to 1
-
-    sbco r0, CONST_PRUSHAREDRAM, 0, 4  // Write count to RAM
-    MOV R31.b0, PRU0_ARM_INTERRUPT+16   // Send notification to Host for program completion
     mov  r0, 0
-    jmp  IGNORE
+    mov  r1, 0                           // Shift register
+
+LOP:
+    add  r0, r0, 3                       // Increment edge timer
+    lsl  r1, r1, 1                       // Shift the register
+
+    qbbc LOP, r31.t15                    // Restart loop if input is 0
+    add  r0, r0, 3
+    set  r1, 0
+    qbbs LOP, r1.t1                     // Restart loop if no edge (...11) in shift reg
+
+    add  r0, r0, 5
+    sbco r0, CONST_PRUSHAREDRAM, 0, 4    // Write count to RAM
+    mov  r0, 0                           // Clear counter on posedge
+    mov  R31.b0, PRU0_ARM_INTERRUPT+16   // Send notification to Host for program completion
+
+    jmp LOP
