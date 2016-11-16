@@ -1,0 +1,8 @@
+1s measured = 1.00003614
+2s measured = 2.00007233
+3s measured = 3.00010844
+4s measured = 4.00014464
+error 1s = 36.14 us
+error 2s = 72.33 us
+error 3s = 108.44 us
+error 4s = 144.64 us
